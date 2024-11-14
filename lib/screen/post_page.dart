@@ -12,6 +12,8 @@ class PostPage extends StatefulWidget {
   final String backgroundImageUrl;
   final String firstImageUrl;
   final String secondImageUrl;
+  final String partnerName;
+  final String partnerId;
 
   const PostPage(
       {super.key,
@@ -19,7 +21,9 @@ class PostPage extends StatefulWidget {
       required this.userName,
       required this.backgroundImageUrl,
       required this.firstImageUrl,
-      required this.secondImageUrl});
+      required this.secondImageUrl,
+      required this.partnerName,
+      required this.partnerId});
 
   @override
   _PostPageState createState() => _PostPageState();
@@ -36,7 +40,9 @@ class _PostPageState extends State<PostPage> {
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
               child: Image.network(
-                widget.backgroundImageUrl,
+                widget.backgroundImageUrl.isNotEmpty
+                    ? widget.backgroundImageUrl
+                    : 'assets/home_image.png',
                 fit: BoxFit.cover,
               ),
             ),
@@ -70,8 +76,9 @@ class _PostPageState extends State<PostPage> {
                               backgroundImageUrl: widget.backgroundImageUrl,
                               firstImageUrl: widget.firstImageUrl,
                               secondImageUrl: widget.secondImageUrl,
-                              partnerName:
-                                  'Partner Name', // Replace with actual partner name
+                              partnerName: widget.partnerName,
+                              partnerId: widget
+                                  .partnerId, // Replace with actual partner name
                             ),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
@@ -115,6 +122,8 @@ class _PostPageState extends State<PostPage> {
                               backgroundImageUrl: widget.backgroundImageUrl,
                               firstImageUrl: widget.firstImageUrl,
                               secondImageUrl: widget.secondImageUrl,
+                              partnerName: widget.partnerName,
+                              partnerId: widget.partnerId,
                             ),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {

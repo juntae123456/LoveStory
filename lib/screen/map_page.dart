@@ -6,6 +6,7 @@ import 'package:geocoding/geocoding.dart'; // geocoding 패키지 추가
 import 'main_page.dart'; // main_page.dart 임포트
 import 'calender_page.dart'; // calender_page.dart 임포트
 import 'list_page.dart'; // list_page.dart 임포트
+import 'settings_page.dart'; // settings_page.dart 임포트
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart' show rootBundle;
@@ -14,9 +15,22 @@ import 'dart:typed_data';
 class MapPage extends StatefulWidget {
   final String userId;
   final String backgroundImageUrl;
+  final String userName;
+  final String firstImageUrl;
+  final String partnerName;
+  final String secondImageUrl;
+  final String partnerId;
 
-  const MapPage(
-      {super.key, required this.userId, required this.backgroundImageUrl});
+  const MapPage({
+    super.key,
+    required this.userId,
+    required this.backgroundImageUrl,
+    required this.userName,
+    required this.firstImageUrl,
+    required this.partnerName,
+    required this.secondImageUrl,
+    required this.partnerId,
+  });
 
   @override
   _MapPageState createState() => _MapPageState();
@@ -117,21 +131,29 @@ class _MapPageState extends State<MapPage> {
             return null;
           }
 
-          if (latitude != null && longitude != null) {
-            LatLng position = LatLng(latitude, longitude);
-            print('Marker added at position: $position'); // 마커 위치 로그 출력
-            return Marker(
-              markerId: MarkerId(doc.id),
-              position: position,
-              icon: customIcon ?? BitmapDescriptor.defaultMarker,
-              infoWindow: InfoWindow(
-                title: doc['title'],
-                snippet: doc['text'],
-                onTap: () {
-                  _showEventDetailDialog(doc);
-                },
-              ),
-            );
+          // userId와 partnerId가 있는지 확인
+          if (doc['userId'] == widget.userId ||
+              doc['userId'] == widget.partnerId ||
+              doc['partnerId'] == widget.userId ||
+              doc['partnerId'] == widget.partnerId) {
+            if (latitude != null && longitude != null) {
+              LatLng position = LatLng(latitude, longitude);
+              print('Marker added at position: $position'); // 마커 위치 로그 출력
+              return Marker(
+                markerId: MarkerId(doc.id),
+                position: position,
+                icon: customIcon ?? BitmapDescriptor.defaultMarker,
+                infoWindow: InfoWindow(
+                  title: doc['title'],
+                  snippet: doc['text'],
+                  onTap: () {
+                    _showEventDetailDialog(doc);
+                  },
+                ),
+              );
+            } else {
+              return null;
+            }
           } else {
             return null;
           }
@@ -209,18 +231,22 @@ class _MapPageState extends State<MapPage> {
       _selectedIndex = index;
     });
 
+    String backgroundImageUrl = widget.backgroundImageUrl.isNotEmpty
+        ? widget.backgroundImageUrl
+        : 'assets/home_image.png';
+
     if (index == 0) {
       Navigator.push(
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => MainPage(
               userId: widget.userId,
-              userName: '', // Add the appropriate value for userName
-              partnerName: '', // Add the appropriate value for partnerName
-              backgroundImageUrl: widget.backgroundImageUrl,
-              firstImageUrl: '', // Add the appropriate value for firstImageUrl
-              secondImageUrl: '' // Add the appropriate value for secondImageUrl
-              ),
+              userName: widget.userName,
+              partnerName: widget.partnerName,
+              backgroundImageUrl: backgroundImageUrl,
+              firstImageUrl: widget.firstImageUrl,
+              secondImageUrl: widget.secondImageUrl,
+              partnerId: widget.partnerId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -235,11 +261,12 @@ class _MapPageState extends State<MapPage> {
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => CalendarPage(
             userId: widget.userId,
-            userName: '', // 필요에 따라 사용자 이름을 전달
-            backgroundImageUrl:
-                widget.backgroundImageUrl, // 필요에 따라 배경 이미지 URL을 전달
-            firstImageUrl: '', // 필요에 따라 첫 번째 이미지 URL을 전달
-            secondImageUrl: '', // 필요에 따라 두 번째 이미지 URL을 전달
+            userName: widget.userName,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
@@ -257,7 +284,32 @@ class _MapPageState extends State<MapPage> {
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => ListPage(
               userId: widget.userId,
-              backgroundImageUrl: widget.backgroundImageUrl),
+              backgroundImageUrl: backgroundImageUrl,
+              userName: widget.userName,
+              firstImageUrl: widget.firstImageUrl,
+              partnerName: widget.partnerName,
+              secondImageUrl: widget.secondImageUrl,
+              partnerId: widget.partnerId),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+        ),
+      );
+    } else if (index == 4) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(
+              userId: widget.userId,
+              userName: widget.userName,
+              backgroundImageUrl: backgroundImageUrl,
+              firstImageUrl: widget.firstImageUrl,
+              secondImageUrl: widget.secondImageUrl,
+              partnerName: widget.partnerName,
+              partnerId: widget.partnerId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -334,6 +386,10 @@ class _MapPageState extends State<MapPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
             label: '리스트',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: '설정',
           ),
         ],
         currentIndex: _selectedIndex,

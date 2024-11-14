@@ -4,14 +4,28 @@ import 'main_page.dart'; // main_page.dart 임포트
 import 'calender_page.dart'; // calender_page.dart 임포트
 import 'map_page.dart'; // map_page.dart 임포트
 import 'note_page.dart'; // note_page.dart 임포트
+import 'settings_page.dart'; // settings_page.dart 임포트
 import 'dart:ui'; // ImageFilter를 사용하기 위해 추가
 
 class ListPage extends StatefulWidget {
   final String userId;
   final String backgroundImageUrl;
+  final String userName;
+  final String firstImageUrl;
+  final String partnerName;
+  final String secondImageUrl;
+  final String partnerId;
 
-  const ListPage(
-      {super.key, required this.userId, required this.backgroundImageUrl});
+  const ListPage({
+    super.key,
+    required this.userId,
+    required this.backgroundImageUrl,
+    required this.userName,
+    required this.firstImageUrl,
+    required this.partnerName,
+    required this.secondImageUrl,
+    required this.partnerId,
+  });
 
   @override
   _ListPageState createState() => _ListPageState();
@@ -26,18 +40,22 @@ class _ListPageState extends State<ListPage> {
       _selectedIndex = index;
     });
 
+    String backgroundImageUrl = widget.backgroundImageUrl.isNotEmpty
+        ? widget.backgroundImageUrl
+        : 'assets/home_image.png';
+
     if (index == 0) {
       Navigator.push(
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => MainPage(
               userId: widget.userId,
-              userName: '', // Add appropriate value
-              backgroundImageUrl: widget.backgroundImageUrl,
-              firstImageUrl: '', // Add appropriate value
-              partnerName: '', // Add appropriate value
-              secondImageUrl: '' // Add appropriate value
-              ),
+              userName: widget.userName,
+              backgroundImageUrl: backgroundImageUrl,
+              firstImageUrl: widget.firstImageUrl,
+              partnerName: widget.partnerName,
+              secondImageUrl: widget.secondImageUrl,
+              partnerId: widget.partnerId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -52,11 +70,12 @@ class _ListPageState extends State<ListPage> {
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => CalendarPage(
             userId: widget.userId,
-            userName: '', // 필요에 따라 사용자 이름을 전달
-            backgroundImageUrl:
-                widget.backgroundImageUrl, // 필요에 따라 배경 이미지 URL을 전달
-            firstImageUrl: '', // 필요에 따라 첫 번째 이미지 URL을 전달
-            secondImageUrl: '', // 필요에 따라 두 번째 이미지 URL을 전달
+            userName: widget.userName,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
@@ -72,8 +91,12 @@ class _ListPageState extends State<ListPage> {
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => MapPage(
             userId: widget.userId,
-            backgroundImageUrl:
-                widget.backgroundImageUrl, // 필요에 따라 배경 이미지 URL을 전달
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            userName: widget.userName,
+            partnerId: widget.partnerId,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
@@ -85,6 +108,27 @@ class _ListPageState extends State<ListPage> {
       );
     } else if (index == 3) {
       // 현재 페이지가 리스트 페이지이므로 아무 작업도 하지 않음
+    } else if (index == 4) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(
+            userId: widget.userId,
+            userName: widget.userName,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+        ),
+      );
     }
   }
 
@@ -94,6 +138,7 @@ class _ListPageState extends State<ListPage> {
     await FirebaseFirestore.instance.collection('lists').add({
       'title': _titleController.text,
       'userId': widget.userId,
+      'partnerId': widget.partnerId,
     });
 
     _titleController.clear();
@@ -105,21 +150,21 @@ class _ListPageState extends State<ListPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('리스트 제목 입력'),
+          title: const Text('리스트 제목 입력'),
           content: TextField(
             controller: _titleController,
-            decoration: InputDecoration(hintText: '리스트 제목 입력'),
+            decoration: const InputDecoration(hintText: '리스트 제목 입력'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 다이얼로그 닫기
               },
-              child: Text('취소'),
+              child: const Text('취소'),
             ),
             TextButton(
               onPressed: _addListItem,
-              child: Text('추가'),
+              child: const Text('추가'),
             ),
           ],
         );
@@ -132,14 +177,14 @@ class _ListPageState extends State<ListPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('삭제 확인'),
-          content: Text('이 리스트를 삭제하시겠습니까?'),
+          title: const Text('삭제 확인'),
+          content: const Text('이 리스트를 삭제하시겠습니까?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // 다이얼로그 닫기
               },
-              child: Text('취소'),
+              child: const Text('취소'),
             ),
             TextButton(
               onPressed: () async {
@@ -149,7 +194,7 @@ class _ListPageState extends State<ListPage> {
                     .delete();
                 Navigator.of(context).pop(); // 다이얼로그 닫기
               },
-              child: Text('삭제'),
+              child: const Text('삭제'),
             ),
           ],
         );
@@ -164,10 +209,15 @@ class _ListPageState extends State<ListPage> {
         children: [
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
-              child: Image.network(
-                widget.backgroundImageUrl,
-                fit: BoxFit.cover,
-              ),
+              child: widget.backgroundImageUrl.startsWith('http')
+                  ? Image.network(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
@@ -181,22 +231,22 @@ class _ListPageState extends State<ListPage> {
           Column(
             children: [
               AppBar(
-                title: Text('Wish List',
-                    style: (TextStyle(
+                title: const Text('Wish List',
+                    style: TextStyle(
                         color: Colors.black,
                         fontSize: 27,
-                        fontFamily: 'GowunDodum-Regular'))),
+                        fontFamily: 'GowunDodum-Regular')),
                 backgroundColor: Colors.transparent,
                 elevation: 0,
               ),
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('lists')
-                      .snapshots(),
+                  stream: FirebaseFirestore.instance.collection('lists').where(
+                      'userId',
+                      whereIn: [widget.userId, widget.partnerId]).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return Center(child: CircularProgressIndicator());
+                      return const Center(child: CircularProgressIndicator());
                     }
                     final lists = snapshot.data!.docs;
                     return ListView.builder(
@@ -204,12 +254,12 @@ class _ListPageState extends State<ListPage> {
                       itemBuilder: (context, index) {
                         final list = lists[index];
                         return ListTile(
-                          leading: Icon(Icons.event),
+                          leading: const Icon(Icons.event),
                           title: Text(list['title'],
-                              style: (TextStyle(
+                              style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
-                                  fontFamily: 'GowunDodum-Regular'))),
+                                  fontFamily: 'GowunDodum-Regular')),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -236,7 +286,7 @@ class _ListPageState extends State<ListPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddListItemDialog,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -255,6 +305,10 @@ class _ListPageState extends State<ListPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
             label: '리스트',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: '설정',
           ),
         ],
         currentIndex: _selectedIndex,

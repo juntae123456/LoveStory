@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'dart:ui'; // ImageFilter를 사용하기 위해 추가
 import 'calender_add_page.dart';
 import 'event_detail_page.dart';
 import 'main_page.dart'; // main_page.dart 임포트
 import 'map_page.dart'; // map_page.dart 임포트
 import 'list_page.dart'; // list_page.dart 임포트
+import 'settings_page.dart'; // settings_page.dart 임포트
 
 class CalendarPage extends StatefulWidget {
   final String userId;
@@ -18,6 +16,8 @@ class CalendarPage extends StatefulWidget {
   final String backgroundImageUrl;
   final String firstImageUrl;
   final String secondImageUrl;
+  final String partnerName;
+  final String partnerId;
 
   const CalendarPage({
     super.key,
@@ -26,6 +26,8 @@ class CalendarPage extends StatefulWidget {
     required this.backgroundImageUrl,
     required this.firstImageUrl,
     required this.secondImageUrl,
+    required this.partnerName,
+    required this.partnerId,
   });
 
   @override
@@ -48,9 +50,12 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Future<void> _fetchEvents() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('events').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('events')
+        .where('userId', whereIn: [widget.userId, widget.partnerId]).get();
     final events = snapshot.docs.map((doc) => doc.data()).toList();
+
+    if (!mounted) return; // 위젯이 여전히 활성 상태인지 확인
 
     setState(() {
       _events = {};
@@ -77,6 +82,10 @@ class _CalendarPageState extends State<CalendarPage> {
       _selectedIndex = index;
     });
 
+    String backgroundImageUrl = widget.backgroundImageUrl.isNotEmpty
+        ? widget.backgroundImageUrl
+        : 'assets/home_image.png';
+
     if (index == 0) {
       Navigator.push(
         context,
@@ -85,10 +94,10 @@ class _CalendarPageState extends State<CalendarPage> {
               userId: widget.userId,
               userName: widget.userName,
               firstImageUrl: widget.firstImageUrl,
-              partnerName: widget
-                  .userName, // Assuming partnerName is the same as userName
+              partnerName: widget.partnerName,
               secondImageUrl: widget.secondImageUrl,
-              backgroundImageUrl: widget.backgroundImageUrl),
+              backgroundImageUrl: backgroundImageUrl,
+              partnerId: widget.partnerId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -104,8 +113,14 @@ class _CalendarPageState extends State<CalendarPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => MapPage(
-              userId: widget.userId,
-              backgroundImageUrl: widget.backgroundImageUrl),
+            userId: widget.userId,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            userName: widget.userName,
+            partnerId: widget.partnerId,
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -119,8 +134,34 @@ class _CalendarPageState extends State<CalendarPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => ListPage(
+            userId: widget.userId,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            userName: widget.userName,
+            partnerId: widget.partnerId,
+          ),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+        ),
+      );
+    } else if (index == 4) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(
               userId: widget.userId,
-              backgroundImageUrl: widget.backgroundImageUrl),
+              userName: widget.userName,
+              backgroundImageUrl: backgroundImageUrl,
+              firstImageUrl: widget.firstImageUrl,
+              secondImageUrl: widget.secondImageUrl,
+              partnerName: widget.partnerName,
+              partnerId: widget.partnerId),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -156,6 +197,8 @@ class _CalendarPageState extends State<CalendarPage> {
           firstImageUrl: widget.firstImageUrl,
           secondImageUrl: widget.secondImageUrl,
           eventId: eventId,
+          partnerId: widget.partnerId,
+          partnerName: widget.partnerName,
         ),
       ),
     );
@@ -174,6 +217,7 @@ class _CalendarPageState extends State<CalendarPage> {
           userName: widget.userName,
           startDate: _rangeStart ?? _selectedDay!,
           endDate: _rangeEnd ?? _selectedDay!,
+          partnerId: widget.partnerId,
         ),
       ),
     );
@@ -190,10 +234,15 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
-              child: Image.network(
-                widget.backgroundImageUrl,
-                fit: BoxFit.cover,
-              ),
+              child: widget.backgroundImageUrl.startsWith('http')
+                  ? Image.network(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
@@ -361,7 +410,10 @@ class _CalendarPageState extends State<CalendarPage> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('events')
-                      .snapshots(), // userId 필터 제거
+                      .where('userId', whereIn: [
+                    widget.userId,
+                    widget.partnerId
+                  ]).snapshots(), // userId 필터 추가
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
@@ -403,7 +455,7 @@ class _CalendarPageState extends State<CalendarPage> {
                               : const Icon(Icons.event),
                           title: Text(
                             title,
-                            style: TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white),
                           ),
                           subtitle: Text(DateFormat('yyyy-MM-dd').format(date)),
                           onTap: () {
@@ -445,6 +497,10 @@ class _CalendarPageState extends State<CalendarPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
             label: '리스트',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: '설정',
           ),
         ],
         currentIndex: _selectedIndex,

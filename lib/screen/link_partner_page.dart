@@ -60,13 +60,15 @@ class _LinkPartnerPageState extends State<LinkPartnerPage> {
 
     if (userDoc.exists) {
       var userData = userDoc.data() as Map<String, dynamic>?;
-      String backgroundImageUrl = userData?['backgroundImageUrl'] ?? '';
+      String backgroundImageUrl = userData?['mainImageUrl'] ?? '';
       String userName = userData?['lastName'] ?? 'Unknown';
       String firstImageUrl =
-          userData?['profileImageUrl'] ?? 'assets/man_profile_image.png';
+          userData?['profileUrl'] ?? 'assets/man_profile_image.png';
 
       String partnerName = 'Unknown';
       String secondImageUrl = 'assets/woman_profile_image.png';
+
+      String partnerId = userData?['partnerId'] ?? 'Unknown';
 
       if (userData != null && userData.containsKey('partnerId')) {
         String partnerId = userData['partnerId'];
@@ -78,8 +80,8 @@ class _LinkPartnerPageState extends State<LinkPartnerPage> {
         if (partnerDoc.exists) {
           var partnerData = partnerDoc.data() as Map<String, dynamic>?;
           partnerName = partnerData?['lastName'] ?? 'Unknown';
-          secondImageUrl = partnerData?['profileImageUrl'] ??
-              'assets/woman_profile_image.png';
+          secondImageUrl =
+              partnerData?['profileUrl'] ?? 'assets/woman_profile_image.png';
         }
       }
 
@@ -95,6 +97,7 @@ class _LinkPartnerPageState extends State<LinkPartnerPage> {
             firstImageUrl: firstImageUrl,
             partnerName: partnerName,
             secondImageUrl: secondImageUrl,
+            partnerId: partnerId,
           ),
         ),
       );

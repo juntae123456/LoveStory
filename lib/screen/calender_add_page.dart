@@ -15,6 +15,7 @@ class CalenderAddPage extends StatefulWidget {
   final DateTime endDate;
   final bool isEditMode;
   final String? eventId;
+  final String partnerId;
 
   const CalenderAddPage({
     super.key,
@@ -24,6 +25,7 @@ class CalenderAddPage extends StatefulWidget {
     required this.endDate,
     this.isEditMode = false,
     this.eventId,
+    required this.partnerId,
   });
 
   @override
@@ -108,6 +110,7 @@ class _CalenderAddPageState extends State<CalenderAddPage> {
         'userId': widget.userId,
         'userName': widget.userName,
         'date': _startDate,
+        'partnerId': widget.partnerId,
       };
 
       if (widget.isEditMode && widget.eventId != null) {
@@ -126,6 +129,7 @@ class _CalenderAddPageState extends State<CalenderAddPage> {
             'imageUrls': imageUrls,
             'userId': widget.userId,
             'userName': widget.userName, // userName 필드 추가
+            'partnerId': widget.partnerId,
           });
           currentDate = currentDate.add(Duration(days: 1));
         }
@@ -177,7 +181,7 @@ class _CalenderAddPageState extends State<CalenderAddPage> {
   }
 
   Future<void> _selectLocation(BuildContext context) async {
-    LatLng selectedLocation = await Navigator.push(
+    final LatLng? selectedLocation = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SelectLocationPage(),
@@ -394,8 +398,8 @@ class SelectLocationPage extends StatefulWidget {
 
 class _SelectLocationPageState extends State<SelectLocationPage> {
   late GoogleMapController mapController;
-  LatLng _center = const LatLng(35.312867, 129.065748);
-  LatLng _lastMapPosition = const LatLng(35.312867, 129.065748);
+  LatLng _center = const LatLng(0, 0);
+  LatLng _lastMapPosition = const LatLng(0, 0);
   final TextEditingController _searchController = TextEditingController();
 
   @override

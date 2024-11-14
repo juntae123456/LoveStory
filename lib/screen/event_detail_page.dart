@@ -16,6 +16,8 @@ class EventDetailPage extends StatelessWidget {
   final String firstImageUrl;
   final String secondImageUrl;
   final String eventId; // eventId 매개변수 추가
+  final String partnerName;
+  final String partnerId;
 
   const EventDetailPage({
     super.key,
@@ -30,6 +32,8 @@ class EventDetailPage extends StatelessWidget {
     required this.firstImageUrl,
     required this.secondImageUrl,
     required this.eventId, // eventId 매개변수 추가
+    required this.partnerName,
+    required this.partnerId,
   });
 
   Future<String> _getUserProfileImageUrl(String userId) async {
@@ -109,6 +113,7 @@ class EventDetailPage extends StatelessWidget {
                     endDate: date,
                     isEditMode: true,
                     eventId: eventId,
+                    partnerId: partnerId,
                   ),
                 ),
               );
@@ -126,10 +131,15 @@ class EventDetailPage extends StatelessWidget {
         children: [
           if (backgroundImageUrl.isNotEmpty)
             Positioned.fill(
-              child: Image.network(
-                backgroundImageUrl,
-                fit: BoxFit.cover,
-              ),
+              child: backgroundImageUrl.startsWith('http')
+                  ? Image.network(
+                      backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
           if (backgroundImageUrl.isNotEmpty)
             Positioned.fill(

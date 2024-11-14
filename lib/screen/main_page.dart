@@ -21,6 +21,7 @@ class MainPage extends StatefulWidget {
   final String firstImageUrl;
   final String partnerName;
   final String secondImageUrl;
+  final String partnerId;
 
   const MainPage({
     super.key,
@@ -30,6 +31,7 @@ class MainPage extends StatefulWidget {
     required this.firstImageUrl,
     required this.partnerName,
     required this.secondImageUrl,
+    required this.partnerId,
   });
 
   @override
@@ -38,23 +40,46 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   String dDay = '';
-  final DateTime startDate = DateTime(2024, 4, 2);
+  DateTime startDate = DateTime(2024, 4, 2); // 기본 날짜 설정
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    calculateDDay(startDate, (difference) {
+    _fetchStartDate();
+  }
+
+  Future<void> _fetchStartDate() async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .get();
+
+    Map<String, dynamic>? userData = userDoc.data() as Map<String, dynamic>?;
+
+    if (userData != null) {
       setState(() {
-        dDay = '$difference일';
+        startDate =
+            userData.containsKey('startDate') && userData['startDate'] != null
+                ? (userData['startDate'] as Timestamp).toDate()
+                : DateTime.now();
+        calculateDDay(startDate, (difference) {
+          setState(() {
+            dDay = '$difference일';
+          });
+        });
       });
-    });
+    }
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+
+    String backgroundImageUrl = widget.backgroundImageUrl.isNotEmpty
+        ? widget.backgroundImageUrl
+        : 'assets/home_image.png';
 
     if (index == 0) {
       // 현재 페이지가 메인 페이지이므로 아무 작업도 하지 않음
@@ -63,11 +88,14 @@ class _MainPageState extends State<MainPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => CalendarPage(
-              userId: widget.userId,
-              userName: widget.userName,
-              backgroundImageUrl: widget.backgroundImageUrl,
-              firstImageUrl: widget.firstImageUrl,
-              secondImageUrl: widget.secondImageUrl),
+            userId: widget.userId,
+            userName: widget.userName,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -81,8 +109,14 @@ class _MainPageState extends State<MainPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => MapPage(
-              userId: widget.userId,
-              backgroundImageUrl: widget.backgroundImageUrl),
+            userId: widget.userId,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            userName: widget.userName,
+            partnerId: widget.partnerId,
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -96,8 +130,14 @@ class _MainPageState extends State<MainPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => ListPage(
-              userId: widget.userId,
-              backgroundImageUrl: widget.backgroundImageUrl),
+            userId: widget.userId,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            userName: widget.userName,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -111,12 +151,14 @@ class _MainPageState extends State<MainPage> {
         context,
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => SettingsPage(
-              userId: widget.userId,
-              userName: widget.userName,
-              backgroundImageUrl: widget.backgroundImageUrl,
-              firstImageUrl: widget.firstImageUrl,
-              secondImageUrl: widget.secondImageUrl // 추가
-              ),
+            userId: widget.userId,
+            userName: widget.userName,
+            backgroundImageUrl: backgroundImageUrl,
+            firstImageUrl: widget.firstImageUrl,
+            secondImageUrl: widget.secondImageUrl,
+            partnerName: widget.partnerName,
+            partnerId: widget.partnerId,
+          ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(
               opacity: animation,
@@ -134,10 +176,8 @@ class _MainPageState extends State<MainPage> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              widget.backgroundImageUrl.isNotEmpty
-                  ? widget.backgroundImageUrl
-                  : 'assets/home_image.png', // 기본 배경 이미지
+            child: Image(
+              image: _getImageProvider(widget.backgroundImageUrl),
               fit: BoxFit.cover,
             ),
           ),
@@ -336,7 +376,9 @@ class _MainPageState extends State<MainPage> {
                             userName: widget.userName,
                             backgroundImageUrl: widget.backgroundImageUrl,
                             firstImageUrl: widget.firstImageUrl,
-                            secondImageUrl: widget.secondImageUrl),
+                            secondImageUrl: widget.secondImageUrl,
+                            partnerName: widget.partnerName,
+                            partnerId: widget.partnerId),
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
                       return FadeTransition(

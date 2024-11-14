@@ -39,15 +39,6 @@ class _NotePageState extends State<NotePage> {
         .update({'checked': !currentValue});
   }
 
-  Future<void> _updateNoteText(String noteId, String text) async {
-    await FirebaseFirestore.instance
-        .collection('lists')
-        .doc(widget.listId)
-        .collection('notes')
-        .doc(noteId)
-        .update({'text': text});
-  }
-
   void _showAddNoteDialog() {
     showDialog(
       context: context,
@@ -131,8 +122,6 @@ class _NotePageState extends State<NotePage> {
                   itemCount: notes.length,
                   itemBuilder: (context, index) {
                     final note = notes[index];
-                    final TextEditingController _controller =
-                        TextEditingController(text: note['text']);
                     return ListTile(
                       leading: Checkbox(
                         value: note['checked'],
@@ -140,20 +129,13 @@ class _NotePageState extends State<NotePage> {
                           _toggleCheck(note.id, note['checked']);
                         },
                       ),
-                      title: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          hintText: '노트 내용을 입력하세요',
-                          border: InputBorder.none,
-                        ),
+                      title: Text(
+                        note['text'],
                         style: TextStyle(
                           decoration: note['checked']
                               ? TextDecoration.lineThrough
                               : TextDecoration.none,
                         ),
-                        onChanged: (text) {
-                          _updateNoteText(note.id, text);
-                        },
                       ),
                       onLongPress: () {
                         _showDeleteConfirmationDialog(note.id);

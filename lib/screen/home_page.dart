@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferences 임포트
 import 'login_page.dart';
 import 'sign_up_page.dart';
 import 'main_page.dart';
@@ -14,14 +15,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  void _login(String userId) {
-    _fetchUserData(userId);
-  }
-
   @override
   void initState() {
     super.initState();
-    // checkLoggedInUser(); // 로컬 저장 확인 부분 주석 처리
+    _checkLoggedInUser();
+  }
+
+  Future<void> _checkLoggedInUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    if (userId != null) {
+      _fetchUserData(userId);
+    }
+  }
+
+  Future<void> _login(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', userId);
+    _fetchUserData(userId);
   }
 
   Future<void> _fetchUserData(String userId) async {
@@ -30,13 +41,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (userDoc.exists) {
       var userData = userDoc.data() as Map<String, dynamic>?;
-      String backgroundImageUrl = userData?['backgroundImageUrl'] ?? '';
+      String backgroundImageUrl = userData?['mainImageUrl'] ?? '';
       String userName = userData?['lastName'] ?? 'Unknown';
       String firstImageUrl =
-          userData?['profileImageUrl'] ?? 'assets/man_profile_image.png';
+          userData?['profileUrl'] ?? 'assets/man_profile_image.png';
 
       String partnerName = 'Unknown';
       String secondImageUrl = 'assets/woman_profile_image.png';
+      String partnerId = userData?['partnerId'] ?? 'Unknown';
 
       if (userData != null && userData.containsKey('partnerId')) {
         String partnerId = userData['partnerId'];
@@ -48,8 +60,8 @@ class _MyHomePageState extends State<MyHomePage> {
         if (partnerDoc.exists) {
           var partnerData = partnerDoc.data() as Map<String, dynamic>?;
           partnerName = partnerData?['lastName'] ?? 'Unknown';
-          secondImageUrl = partnerData?['profileImageUrl'] ??
-              'assets/woman_profile_image.png';
+          secondImageUrl =
+              partnerData?['profileUrl'] ?? 'assets/woman_profile_image.png';
         }
       }
 
@@ -65,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
             firstImageUrl: firstImageUrl,
             partnerName: partnerName,
             secondImageUrl: secondImageUrl,
+            partnerId: partnerId,
           ),
         ),
       );
