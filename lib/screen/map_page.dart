@@ -210,7 +210,6 @@ class _MapPageState extends State<MapPage> {
               Text('내용: ${doc['text']}'),
               Text(
                   '날짜: ${DateFormat('yyyy-MM-dd').format((doc['date'] as Timestamp).toDate())}'),
-              Text('장소: ${doc['location']}'),
             ],
           ),
           actions: [

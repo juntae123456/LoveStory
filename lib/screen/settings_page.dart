@@ -1,14 +1,59 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // SharedPreferences 임포트
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'profile_edit_dialog.dart';
+import 'image_upload_dialog.dart';
+import 'date_change_dialog.dart';
+import 'auth_utils.dart';
 import 'main_page.dart';
 import 'calender_page.dart';
 import 'map_page.dart';
 import 'list_page.dart';
-import 'login_page.dart'; // 로그인 페이지 임포트
-import 'dart:io';
+import 'dart:ui'; // ImageFilter를 사용하기 위해 추가
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AdMobService {
+  // 배너 광고
+  static String? get bannerAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-3429968328236998/1248939467'; // 테스트 광고 ID
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3429968328236998/8744286102'; // 테스트 광고 ID
+    }
+    return null;
+  }
+
+  // 전면 광고
+  static String? get interstitialAdUnitId {
+    if (Platform.isAndroid) {
+      return 'ca-app-pub-3429968328236998/4996612788'; // 테스트 광고 ID
+    } else if (Platform.isIOS) {
+      return 'ca-app-pub-3429968328236998/3311996022'; // 테스트 광고 ID
+    }
+    return null;
+  }
+
+  static final BannerAdListener bannerAdListener = BannerAdListener(
+    onAdLoaded: (ad) => debugPrint('Ad loaded'),
+    onAdFailedToLoad: (ad, error) {
+      ad.dispose();
+      debugPrint('Ad fail to load: $error');
+    },
+    onAdOpened: (ad) => debugPrint('Ad opened'),
+    onAdClosed: (ad) => debugPrint('Ad closed'),
+  );
+
+  static final InterstitialAdLoadCallback interstitialAdLoadCallback =
+      InterstitialAdLoadCallback(
+    onAdLoaded: (InterstitialAd ad) {
+      debugPrint('Interstitial ad loaded');
+      ad.show();
+    },
+    onAdFailedToLoad: (LoadAdError error) {
+      debugPrint('Interstitial ad failed to load: $error');
+    },
+  );
+}
 
 class SettingsPage extends StatefulWidget {
   final String userId;
@@ -35,10 +80,12 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  BannerAd? _bannerAd;
+  InterstitialAd? _interstitialAd;
   late String backgroundImageUrl;
   late String firstImageUrl;
   late String secondImageUrl;
-  bool isLoading = false; // 로딩 상태 변수 추가
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -46,9 +93,180 @@ class _SettingsPageState extends State<SettingsPage> {
     backgroundImageUrl = widget.backgroundImageUrl;
     firstImageUrl = widget.firstImageUrl;
     secondImageUrl = widget.secondImageUrl;
+    _createBannerAd();
+    _loadInterstitialAd();
   }
 
-  void _onItemTapped(BuildContext context, int index) {
+  void _createBannerAd() {
+    _bannerAd = BannerAd(
+      size: AdSize.banner, // 배너 사이즈
+      adUnitId: AdMobService.bannerAdUnitId!, // 광고 ID 등록
+      listener: AdMobService.bannerAdListener, // 리스너 등록
+      request: const AdRequest(),
+    )..load();
+  }
+
+  void _loadInterstitialAd() {
+    InterstitialAd.load(
+      adUnitId: AdMobService.interstitialAdUnitId!,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (InterstitialAd ad) {
+          _interstitialAd = ad;
+          debugPrint('Interstitial ad loaded');
+        },
+        onAdFailedToLoad: (LoadAdError error) {
+          debugPrint('Interstitial ad failed to load: $error');
+        },
+      ),
+    );
+  }
+
+  void _showInterstitialAd() {
+    if (_interstitialAd != null) {
+      _interstitialAd!.show();
+      _interstitialAd = null; // 광고를 한 번만 표시하도록 설정
+    } else {
+      debugPrint('Interstitial ad is not ready yet');
+    }
+  }
+
+  Future<void> _onProfileImageChanged(String newImageUrl) async {
+    setState(() {
+      firstImageUrl = newImageUrl;
+    });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .update({'firstImageUrl': newImageUrl});
+    _showInterstitialAd();
+  }
+
+  Future<void> _onBackgroundImageChanged(String newImageUrl) async {
+    setState(() {
+      backgroundImageUrl = newImageUrl;
+    });
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.userId)
+        .update({'backgroundImageUrl': newImageUrl});
+    _showInterstitialAd();
+  }
+
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('계정 삭제'),
+          content: const Text('정말로 계정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _deleteAccount();
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Firestore에서 userId와 관련된 모든 문서 삭제
+      final userDocs = await FirebaseFirestore.instance
+          .collection('users')
+          .where('userId', isEqualTo: widget.userId)
+          .get();
+
+      for (var doc in userDocs.docs) {
+        await doc.reference.delete();
+      }
+
+      // 로그아웃 및 초기 화면으로 이동
+      await logout(context);
+    } catch (e) {
+      debugPrint('계정 삭제 중 오류 발생: $e');
+      _showErrorDialog('계정 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCopyrightDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('저작권 정보',
+              style: TextStyle(fontFamily: 'GowunDodum-Regular')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text('폰트:', style: TextStyle(fontFamily: 'Pretendard-Black')),
+              Text(
+                  'CuteFont-Regular, GowunDodum-Regular, ImperialScript-Regular, Pretendard-Black, Pretendard-ExtraBold, Pretendard-Thin',
+                  style: TextStyle(fontFamily: 'Pretendard-Thin')),
+              SizedBox(height: 10),
+              Text('이미지 출처:', style: TextStyle(fontFamily: 'Pretendard-Black')),
+              Text('롯리 무료 이미지 사용',
+                  style: TextStyle(fontFamily: 'Pretendard-Thin')),
+              SizedBox(height: 10),
+              Text('아이콘:', style: TextStyle(fontFamily: 'Pretendard-Black')),
+              Text('사랑 아이콘 - 제작자: Andrean Prabowo, 제공처: Flaticon',
+                  style: TextStyle(fontFamily: 'Pretendard-Thin')),
+              SizedBox(height: 10),
+              Text('© 2024 [love story]. All rights reserved.',
+                  style: TextStyle(fontFamily: 'Pretendard-Thin')),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('닫기',
+                  style: TextStyle(fontFamily: 'Pretendard-Thin')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void onItemTapped(BuildContext context, int index) {
     String backgroundImageUrl = this.backgroundImageUrl.isNotEmpty
         ? this.backgroundImageUrl
         : 'assets/home_image.png';
@@ -63,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
             partnerName: widget.partnerName,
             backgroundImageUrl: backgroundImageUrl,
             firstImageUrl: firstImageUrl,
-            secondImageUrl: secondImageUrl,
+            secondImageUrl: widget.secondImageUrl,
             partnerId: widget.partnerId,
           ),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -83,7 +301,7 @@ class _SettingsPageState extends State<SettingsPage> {
             userName: widget.userName,
             backgroundImageUrl: backgroundImageUrl,
             firstImageUrl: firstImageUrl,
-            secondImageUrl: secondImageUrl,
+            secondImageUrl: widget.secondImageUrl,
             partnerName: widget.partnerName,
             partnerId: widget.partnerId,
           ),
@@ -103,7 +321,7 @@ class _SettingsPageState extends State<SettingsPage> {
             userId: widget.userId,
             backgroundImageUrl: backgroundImageUrl,
             firstImageUrl: firstImageUrl,
-            secondImageUrl: secondImageUrl,
+            secondImageUrl: widget.secondImageUrl,
             userName: widget.userName,
             partnerName: widget.partnerName,
             partnerId: widget.partnerId,
@@ -124,7 +342,7 @@ class _SettingsPageState extends State<SettingsPage> {
             userId: widget.userId,
             backgroundImageUrl: backgroundImageUrl,
             firstImageUrl: firstImageUrl,
-            secondImageUrl: secondImageUrl,
+            secondImageUrl: widget.secondImageUrl,
             userName: widget.userName,
             partnerName: widget.partnerName,
             partnerId: widget.partnerId,
@@ -140,431 +358,202 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _pickAndUploadImage(
-      BuildContext context,
-      String type,
-      String userId,
-      String userName,
-      String partnerName,
-      Function(String, String) callback) async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      File imageFile = File(pickedFile.path);
-      setState(() {
-        isLoading = true; // 업로드 시작 시 로딩 상태를 true로 설정
-      });
-      try {
-        // 기존 이미지 URL 가져오기
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .get();
-        Map<String, dynamic>? userData =
-            userDoc.data() as Map<String, dynamic>?;
-
-        String? existingImageUrl;
-        if (userData != null) {
-          if (type == 'main') {
-            existingImageUrl = userData['mainImageUrl'];
-          } else if (type == 'profile') {
-            existingImageUrl = userData['profileUrl'];
-          }
-        }
-        if (existingImageUrl != null && existingImageUrl.isNotEmpty) {
-          await FirebaseStorage.instance.refFromURL(existingImageUrl).delete();
-        }
-
-        // 새로운 이미지 업로드
-        final storageRef = FirebaseStorage.instance.ref().child(
-            '$userName/$partnerName/$type/${DateTime.now().millisecondsSinceEpoch}_${pickedFile.name}');
-        await storageRef.putFile(imageFile);
-        final imageUrl = await storageRef.getDownloadURL();
-
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .update({
-          type == 'main' ? 'mainImageUrl' : 'profileUrl': imageUrl,
-        });
-
-        callback(type, imageUrl);
-
-        // 이미지 URL 업데이트
-        if (mounted) {
-          setState(() {
-            if (type == 'main') {
-              backgroundImageUrl = imageUrl;
-            } else if (type == 'profile') {
-              firstImageUrl = imageUrl;
-            }
-            isLoading = false; // 업로드 완료 시 로딩 상태를 false로 설정
-          });
-        }
-      } catch (e) {
-        print('Error uploading image: $e');
-        if (mounted) {
-          setState(() {
-            isLoading = false; // 업로드 실패 시 로딩 상태를 false로 설정
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('이미지 업로드에 실패했습니다.')),
-          );
-        }
-      }
-    } else {
-      print('No image selected.');
-      if (mounted) {
-        setState(() {
-          isLoading = false; // 이미지 선택 취소 시 로딩 상태를 false로 설정
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지가 선택되지 않았습니다.')),
-        );
-      }
-    }
-  }
-
-  void showProfileImageUploadDialog(BuildContext context, String userId,
-      String userName, String partnerName, Function(String, String) callback) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('프로필 이미지 업로드'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  await _pickAndUploadImage(context, 'profile', userId,
-                      userName, partnerName, callback);
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: Text('$userName 프로필 이미지 업로드'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('취소'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void showBackgroundImageUploadDialog(BuildContext context, String userId,
-      String userName, String partnerName, Function(String, String) callback) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('배경 이미지 업로드'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ElevatedButton(
-                onPressed: () async {
-                  await _pickAndUploadImage(
-                      context, 'main', userId, userName, partnerName, callback);
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text('배경 이미지 업로드'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('취소'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _login(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userId', userId);
-    _fetchUserData(userId);
-  }
-
-  Future<void> _fetchUserData(String userId) async {
-    DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
-
-    if (userDoc.exists) {
-      var userData = userDoc.data() as Map<String, dynamic>?;
-      String backgroundImageUrl = userData?['backgroundImageUrl'] ?? '';
-      String userName = userData?['lastName'] ?? 'Unknown';
-      String firstImageUrl =
-          userData?['profileImageUrl'] ?? 'assets/man_profile_image.png';
-
-      String partnerName = 'Unknown';
-      String secondImageUrl = 'assets/woman_profile_image.png';
-      String partnerId = userData?['partnerId'] ?? 'Unknown';
-
-      if (userData != null && userData.containsKey('partnerId')) {
-        String partnerId = userData['partnerId'];
-        DocumentSnapshot partnerDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(partnerId)
-            .get();
-
-        if (partnerDoc.exists) {
-          var partnerData = partnerDoc.data() as Map<String, dynamic>?;
-          partnerName = partnerData?['lastName'] ?? 'Unknown';
-          secondImageUrl = partnerData?['profileImageUrl'] ??
-              'assets/woman_profile_image.png';
-        }
-      }
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MainPage(
-              userId: userId,
-              backgroundImageUrl: backgroundImageUrl.isNotEmpty
-                  ? backgroundImageUrl
-                  : 'assets/home_image.png', // 기본 배경 이미지
-              userName: userName,
-              firstImageUrl: firstImageUrl,
-              partnerName: partnerName,
-              secondImageUrl: secondImageUrl,
-              partnerId: partnerId,
-            ),
-          ),
-        );
-      }
-    }
-  }
-
-  void showProfileEditDialog(BuildContext context, String userId) async {
-    final TextEditingController userIdController = TextEditingController();
-    final TextEditingController userNameController = TextEditingController();
-    final TextEditingController passwordController = TextEditingController();
-    final TextEditingController partnerIdController = TextEditingController();
-
-    // Firestore에서 사용자 정보 가져오기
-    DocumentSnapshot userDoc =
-        await FirebaseFirestore.instance.collection('users').doc(userId).get();
-
-    if (userDoc.exists) {
-      userIdController.text = userDoc['userId'];
-      userNameController.text = userDoc['lastName'];
-      partnerIdController.text = userDoc['partnerId'];
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('프로필 수정'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: userIdController,
-                decoration: const InputDecoration(labelText: '아이디'),
-                readOnly: true,
-              ),
-              TextField(
-                controller: userNameController,
-                decoration: const InputDecoration(labelText: '이름'),
-              ),
-              TextField(
-                controller: passwordController,
-                decoration: const InputDecoration(labelText: '비밀번호 변경'),
-                obscureText: true,
-              ),
-              TextField(
-                controller: partnerIdController,
-                decoration: const InputDecoration(labelText: '상대방 아이디'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () {
-                // 프로필 수정 로직 추가
-                FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(userId)
-                    .update({
-                  'lastName': userNameController.text,
-                  'password': passwordController.text,
-                  'partnerId': partnerIdController.text,
-                }).then((_) {
-                  print('Profile updated successfully.');
-                }).catchError((error) {
-                  print('Failed to update profile: $error');
-                });
-                if (mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-              child: const Text('저장'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void showDateChangeDialog(BuildContext context) async {
-    DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-
-    if (selectedDate != null) {
-      // Firestore에 날짜 업데이트 로직 추가
-      FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
-        'startDate': selectedDate,
-      }).then((_) {
-        print('Date updated successfully.');
-      }).catchError((error) {
-        print('Failed to update date: $error');
-      });
-
-      // 상대방의 시작 날짜도 업데이트
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .get();
-      if (userDoc.exists) {
-        String partnerId = userDoc['partnerId'];
-        FirebaseFirestore.instance.collection('users').doc(partnerId).update({
-          'startDate': selectedDate,
-        }).then((_) {
-          print('Partner date updated successfully.');
-        }).catchError((error) {
-          print('Failed to update partner date: $error');
-        });
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('날짜가 변경되었습니다: ${selectedDate.toLocal()}')),
-        );
-      }
-    } else {
-      print('No date selected.');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('날짜가 선택되지 않았습니다.')),
-        );
-      }
-    }
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('userId'); // 사용자 세션 정보 삭제
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => LoginPage(onLogin: _login)),
-        );
-      }
-    } catch (e) {
-      print('Error logging out: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그아웃에 실패했습니다.')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('설정'),
+        title: const Text('설정',
+            style: TextStyle(fontFamily: 'GowunDodum-Regular', fontSize: 24)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: Stack(
         children: [
-          Column(
-            children: [
-              Container(
-                height: 100, // 광고 배너를 위한 공간
-                color: Colors.grey[300],
-                child: const Center(child: Text('광고 배너')),
-              ),
-              Expanded(
-                child: ListView(
-                  children: [
-                    ListTile(
-                      leading: const Icon(Icons.edit),
-                      title: const Text('프로필 수정'),
-                      onTap: () {
-                        showProfileEditDialog(context, widget.userId);
-                      },
+          if (backgroundImageUrl.isNotEmpty)
+            Positioned.fill(
+              child: backgroundImageUrl.startsWith('http')
+                  ? Image.network(
+                      backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      backgroundImageUrl,
+                      fit: BoxFit.cover,
                     ),
-                    ListTile(
-                      leading: const Icon(Icons.photo_camera),
-                      title: const Text('프로필 사진 변경'),
-                      onTap: () {
-                        showProfileImageUploadDialog(context, widget.userId,
-                            widget.userName, widget.partnerName, (type, url) {
-                          // 프로필 사진 변경 로직 추가
-                        });
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.image),
-                      title: const Text('배경 사진 변경'),
-                      onTap: () {
-                        showBackgroundImageUploadDialog(context, widget.userId,
-                            widget.userName, widget.partnerName, (type, url) {
-                          // 배경 사진 변경 로직 추가
-                        });
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.date_range),
-                      title: const Text('날짜 변경'),
-                      onTap: () {
-                        showDateChangeDialog(context);
-                      },
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: const Text('로그아웃'),
-                      onTap: () => _logout(context),
-                    ),
-                  ],
+            ),
+          if (backgroundImageUrl.isNotEmpty)
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 4.0, sigmaY: 4.0), // 흐림 효과 적용
+                child: Container(
+                  color: Colors.black.withOpacity(0), // 투명한 컨테이너
                 ),
               ),
+            ),
+          Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.only(
+                          top: 100.0,
+                          left: 16.0,
+                          right: 16.0,
+                          bottom: 16.0), // 상단에 패딩 추가
+                      children: [
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.edit, color: Colors.black),
+                            title: const Text('프로필 수정',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () {
+                              showProfileEditDialog(context, widget.userId);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.photo_camera,
+                                color: Colors.black),
+                            title: const Text('프로필 사진 변경',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () {
+                              showProfileImageUploadDialog(
+                                  context,
+                                  widget.userId,
+                                  widget.userName,
+                                  widget.partnerName, (type, url) {
+                                _onProfileImageChanged(url);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.image, color: Colors.black),
+                            title: const Text('배경 사진 변경',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () {
+                              showBackgroundImageUploadDialog(
+                                  context,
+                                  widget.userId,
+                                  widget.userName,
+                                  widget.partnerName, (type, url) {
+                                _onBackgroundImageChanged(url);
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.date_range,
+                                color: Colors.black),
+                            title: const Text('날짜 변경',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () {
+                              showDateChangeDialog(context, widget.userId);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.logout, color: Colors.black),
+                            title: const Text('로그아웃',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () => logout(context),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.info, color: Colors.black),
+                            title: const Text('저작권 정보',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18)),
+                            onTap: () {
+                              _showCopyrightDialog(context);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.delete, color: Colors.red),
+                            title: const Text('계정 삭제',
+                                style: TextStyle(
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 18,
+                                    color: Colors.red)),
+                            onTap: _showDeleteAccountDialog,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (_bannerAd != null)
+                Positioned(
+                  bottom: 40, // 메뉴바 위에 배치
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: AdWidget(ad: _bannerAd!),
+                    width: _bannerAd!.size.width.toDouble(),
+                    height: _bannerAd!.size.height.toDouble(),
+                  ),
+                ),
             ],
           ),
           if (isLoading)
@@ -596,10 +585,10 @@ class _SettingsPageState extends State<SettingsPage> {
             label: '설정',
           ),
         ],
-        currentIndex: 4, // 설정 페이지의 인덱스
+        currentIndex: 4,
         selectedItemColor: Colors.amber[800],
         unselectedItemColor: Colors.grey,
-        onTap: (index) => _onItemTapped(context, index),
+        onTap: (index) => onItemTapped(context, index),
       ),
     );
   }

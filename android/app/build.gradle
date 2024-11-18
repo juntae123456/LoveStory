@@ -20,6 +20,13 @@ ext {
     }
 }
 
+ext {
+    androidappid = dotenv.getProperty('ANDROID_APP_ID')
+    if (androidappid == null) {
+        throw new RuntimeException("Could not find GOOGLE_MAP_API_KEY in .env file")
+    }
+}
+
 android {
     namespace = "com.example.lovestory"
     compileSdkVersion 34
@@ -46,6 +53,7 @@ android {
 
         manifestPlaceholders = [
             GOOGLE_MAP_API_KEY: googleApiKey,
+            ANDROID_APP_ID: androidappid,
             applicationName: "android.app.Application"
         ]
     }

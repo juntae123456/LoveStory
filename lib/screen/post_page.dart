@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:ui'; // ImageFilter를 사용하기 위해 추가
 import 'package:intl/intl.dart'; // 날짜 형식을 위해 추가
 import 'main_page.dart'; // main_page.dart 임포트
@@ -39,12 +38,15 @@ class _PostPageState extends State<PostPage> {
         children: [
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
-              child: Image.network(
-                widget.backgroundImageUrl.isNotEmpty
-                    ? widget.backgroundImageUrl
-                    : 'assets/home_image.png',
-                fit: BoxFit.cover,
-              ),
+              child: widget.backgroundImageUrl.startsWith('http')
+                  ? Image.network(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      widget.backgroundImageUrl,
+                      fit: BoxFit.cover,
+                    ),
             ),
           if (widget.backgroundImageUrl.isNotEmpty)
             Positioned.fill(
@@ -77,52 +79,6 @@ class _PostPageState extends State<PostPage> {
                               firstImageUrl: widget.firstImageUrl,
                               secondImageUrl: widget.secondImageUrl,
                               partnerName: widget.partnerName,
-                              partnerId: widget
-                                  .partnerId, // Replace with actual partner name
-                            ),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: child,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'love',
-                        style: TextStyle(
-                          fontFamily: 'ImperialScript-Regular',
-                          fontSize: 50,
-                          color: Colors.white,
-                          shadows: [
-                            Shadow(
-                              offset: Offset(2.0, 2.0),
-                              blurRadius: 3.0,
-                              color: Color.fromARGB(255, 0, 0, 0),
-                            ),
-                          ],
-                        ),
-                      ),
-                      style: TextButton.styleFrom(
-                        splashFactory: NoSplash.splashFactory,
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    CalendarPage(
-                              userId: widget.userId,
-                              userName: widget.userName,
-                              backgroundImageUrl: widget.backgroundImageUrl,
-                              firstImageUrl: widget.firstImageUrl,
-                              secondImageUrl: widget.secondImageUrl,
-                              partnerName: widget.partnerName,
                               partnerId: widget.partnerId,
                             ),
                             transitionsBuilder: (context, animation,
@@ -136,7 +92,7 @@ class _PostPageState extends State<PostPage> {
                         );
                       },
                       child: Text(
-                        'story',
+                        'love story',
                         style: TextStyle(
                           fontFamily: 'ImperialScript-Regular',
                           fontSize: 50,
@@ -226,25 +182,49 @@ class _PostPageState extends State<PostPage> {
                 child: StreamBuilder<QuerySnapshot>(
                   stream: showSentMessages
                       ? FirebaseFirestore.instance
-                          .collection('message')
+                          .collection('messages')
+                          .doc(widget.userId)
+                          .collection('userMessages')
                           .where('userId', isEqualTo: widget.userId)
                           .orderBy('timestamp', descending: true)
                           .snapshots()
                       : FirebaseFirestore.instance
-                          .collection('message')
-                          .where('userId', isNotEqualTo: widget.userId)
-                          .where(
-                            'timestamp',
-                            isLessThan: Timestamp.fromDate(
-                              DateTime(DateTime.now().year,
-                                  DateTime.now().month, DateTime.now().day),
-                            ),
-                          )
+                          .collection('messages')
+                          .doc(widget.partnerId)
+                          .collection('userMessages')
+                          .where('partnerId', isEqualTo: widget.userId)
+                          .where('timestamp',
+                              isLessThan: Timestamp.fromDate(
+                                  DateTime.now().subtract(Duration(days: 1))))
                           .orderBy('timestamp', descending: true)
                           .snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          '오류가 발생했습니다.',
+                          style: TextStyle(
+                            fontFamily: 'GowunDodum-Regular',
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
                       return Center(child: CircularProgressIndicator());
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
+                        child: Text(
+                          '메시지가 없습니다.',
+                          style: TextStyle(
+                            fontFamily: 'GowunDodum-Regular',
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
                     }
                     final messages = snapshot.data!.docs;
                     final groupedMessages = _groupMessagesByDate(messages);
@@ -275,16 +255,22 @@ class _PostPageState extends State<PostPage> {
                               final truncatedContent = content.length > 10
                                   ? content.substring(0, 10) + '...'
                                   : content;
-                              return ListTile(
-                                title: Text(truncatedContent),
-                                subtitle: Text(data['timestamp'] != null
-                                    ? (data['timestamp'] as Timestamp)
-                                        .toDate()
-                                        .toString()
-                                    : 'Loading...'),
-                                onTap: () {
-                                  _showMessageDialog(context, content);
-                                },
+                              return Card(
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: ListTile(
+                                  title: Text(truncatedContent),
+                                  subtitle: Text(data['timestamp'] != null
+                                      ? DateFormat('yyyy-MM-dd HH:mm').format(
+                                          (data['timestamp'] as Timestamp)
+                                              .toDate())
+                                      : 'Loading...'),
+                                  onTap: () {
+                                    _showMessageDialog(context, content);
+                                  },
+                                ),
                               );
                             }).toList(),
                           ],

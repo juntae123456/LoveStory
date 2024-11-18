@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 
-void showMailDialog(BuildContext context, String userId, String userName) {
+void showMailDialog(
+    BuildContext context, String userId, String userName, String partnerId) {
   final TextEditingController _mailController = TextEditingController();
 
   showDialog(
@@ -46,11 +47,16 @@ void showMailDialog(BuildContext context, String userId, String userName) {
           TextButton(
             onPressed: () async {
               if (_mailController.text.isNotEmpty) {
-                await FirebaseFirestore.instance.collection('message').add({
+                await FirebaseFirestore.instance
+                    .collection('messages')
+                    .doc(userId)
+                    .collection('userMessages')
+                    .add({
                   'content': _mailController.text,
                   'timestamp': FieldValue.serverTimestamp(),
                   'userId': userId,
                   'userName': userName,
+                  'partnerId': partnerId,
                 });
                 Navigator.of(context).pop();
                 _showLottieAnimation(context);

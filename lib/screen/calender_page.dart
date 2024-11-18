@@ -446,30 +446,37 @@ class _CalendarPageState extends State<CalendarPage> {
                               .shrink(); // 데이터가 null인 경우 빈 위젯 반환
                         }
 
-                        return ListTile(
-                          leading: imageUrls.isNotEmpty
-                              ? Hero(
-                                  tag: imageUrls[0],
-                                  child: Image.network(imageUrls[0]),
-                                )
-                              : const Icon(Icons.event),
-                          title: Text(
-                            title,
-                            style: const TextStyle(color: Colors.white),
+                        return Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          subtitle: Text(DateFormat('yyyy-MM-dd').format(date)),
-                          onTap: () {
-                            _navigateToEventDetail(
-                              event.id,
-                              userId,
-                              userName,
+                          child: ListTile(
+                            leading: imageUrls.isNotEmpty
+                                ? Hero(
+                                    tag: imageUrls[0],
+                                    child: Image.network(imageUrls[0]),
+                                  )
+                                : const Icon(Icons.event),
+                            title: Text(
                               title,
-                              text,
-                              location,
-                              imageUrls,
-                              date,
-                            );
-                          },
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                            subtitle:
+                                Text(DateFormat('yyyy-MM-dd').format(date)),
+                            onTap: () {
+                              _navigateToEventDetail(
+                                event.id,
+                                userId,
+                                userName,
+                                title,
+                                text,
+                                location,
+                                imageUrls,
+                                date,
+                              );
+                            },
+                          ),
                         );
                       }).toList(),
                     );

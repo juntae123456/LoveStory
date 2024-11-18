@@ -172,6 +172,9 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -183,7 +186,7 @@ class _MainPageState extends State<MainPage> {
           ),
           Column(
             children: [
-              SizedBox(height: 70),
+              SizedBox(height: screenHeight * 0.1),
               Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Row(
@@ -193,7 +196,7 @@ class _MainPageState extends State<MainPage> {
                       'love',
                       style: TextStyle(
                         fontFamily: 'ImperialScript-Regular',
-                        fontSize: 70,
+                        fontSize: screenWidth * 0.15,
                         color: Colors.white,
                         shadows: [
                           Shadow(
@@ -204,12 +207,12 @@ class _MainPageState extends State<MainPage> {
                         ],
                       ),
                     ),
-                    SizedBox(width: 20),
+                    SizedBox(width: screenWidth * 0.05),
                     Text(
                       'story',
                       style: TextStyle(
                         fontFamily: 'ImperialScript-Regular',
-                        fontSize: 70,
+                        fontSize: screenWidth * 0.15,
                         color: Colors.white,
                         shadows: [
                           Shadow(
@@ -223,11 +226,11 @@ class _MainPageState extends State<MainPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 200),
+              SizedBox(height: screenHeight * 0.2),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
-                  padding: const EdgeInsets.only(left: 30.0),
+                  padding: EdgeInsets.only(left: screenWidth * 0.1),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -235,7 +238,7 @@ class _MainPageState extends State<MainPage> {
                         dDay,
                         style: TextStyle(
                           fontFamily: 'GowunDodum-Regular',
-                          fontSize: 60,
+                          fontSize: screenWidth * 0.15,
                           color: Colors.white,
                           shadows: [
                             Shadow(
@@ -250,7 +253,7 @@ class _MainPageState extends State<MainPage> {
                         '${startDate.year}.${startDate.month}.${startDate.day}',
                         style: TextStyle(
                           fontFamily: 'GowunDodum-Regular',
-                          fontSize: 20,
+                          fontSize: screenWidth * 0.05,
                           color: Colors.white,
                           shadows: [
                             Shadow(
@@ -265,7 +268,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                 ),
               ),
-              SizedBox(height: 40),
+              SizedBox(height: screenHeight * 0.03),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -280,17 +283,17 @@ class _MainPageState extends State<MainPage> {
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 50,
+                          radius: screenWidth * 0.13,
                           backgroundImage:
                               _getImageProvider(widget.firstImageUrl),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: screenHeight * 0.02),
                       Text(
                         widget.userName,
                         style: TextStyle(
                           fontFamily: 'GowunDodum-Regular',
-                          fontSize: 25,
+                          fontSize: screenWidth * 0.06,
                           color: Colors.white,
                           shadows: [
                             Shadow(
@@ -303,13 +306,13 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ],
                   ),
-                  SizedBox(width: 20),
+                  SizedBox(width: screenWidth * 0.05),
                   Lottie.asset(
                     'assets/love.json',
-                    width: 100,
-                    height: 100,
+                    width: screenWidth * 0.25,
+                    height: screenHeight * 0.1,
                   ),
-                  SizedBox(width: 20),
+                  SizedBox(width: screenWidth * 0.03),
                   Column(
                     children: [
                       Container(
@@ -321,17 +324,17 @@ class _MainPageState extends State<MainPage> {
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 50,
+                          radius: screenWidth * 0.13,
                           backgroundImage:
                               _getImageProvider(widget.secondImageUrl),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      SizedBox(height: screenHeight * 0.02),
                       Text(
                         widget.partnerName,
                         style: TextStyle(
                           fontFamily: 'GowunDodum-Regular',
-                          fontSize: 25,
+                          fontSize: screenWidth * 0.06,
                           color: Colors.white,
                           shadows: [
                             Shadow(
@@ -349,22 +352,23 @@ class _MainPageState extends State<MainPage> {
             ],
           ),
           Positioned(
-            bottom: 20,
-            right: 20,
+            bottom: screenHeight * 0.0,
+            right: screenWidth * 0.0,
             child: GestureDetector(
               onTap: () {
-                showMailDialog(context, widget.userId, widget.userName);
+                showMailDialog(
+                    context, widget.userId, widget.userName, widget.partnerId);
               },
               child: Lottie.asset(
                 'assets/mail.json',
-                width: 60,
-                height: 60,
+                width: screenWidth * 0.15,
+                height: screenHeight * 0.1,
               ),
             ),
           ),
           Positioned(
-            bottom: 20,
-            left: 20,
+            bottom: screenHeight * 0.0,
+            left: screenWidth * 0.0,
             child: GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -391,8 +395,8 @@ class _MainPageState extends State<MainPage> {
               },
               child: Lottie.asset(
                 'assets/send_mail.json',
-                width: 70,
-                height: 70,
+                width: screenWidth * 0.18,
+                height: screenHeight * 0.1,
               ),
             ),
           ),

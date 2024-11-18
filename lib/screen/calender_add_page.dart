@@ -41,6 +41,7 @@ class _CalenderAddPageState extends State<CalenderAddPage> {
   late DateTime _startDate;
   late DateTime _endDate;
   LatLng? _selectedLocation;
+  bool _isImagePickerActive = false;
 
   @override
   void initState() {
@@ -70,12 +71,21 @@ class _CalenderAddPageState extends State<CalenderAddPage> {
   }
 
   Future<void> _pickImages() async {
-    final pickedFiles = await ImagePicker().pickMultiImage();
-    if (pickedFiles != null) {
-      setState(() {
-        _selectedImages =
-            pickedFiles.map((pickedFile) => File(pickedFile.path)).toList();
-      });
+    if (_isImagePickerActive) return; // 이미지 선택기가 이미 활성화된 경우 반환
+    _isImagePickerActive = true;
+
+    try {
+      final pickedFiles = await ImagePicker().pickMultiImage();
+      if (pickedFiles != null) {
+        setState(() {
+          _selectedImages =
+              pickedFiles.map((pickedFile) => File(pickedFile.path)).toList();
+        });
+      }
+    } catch (e) {
+      print('Error picking images: $e');
+    } finally {
+      _isImagePickerActive = false;
     }
   }
 
@@ -398,8 +408,8 @@ class SelectLocationPage extends StatefulWidget {
 
 class _SelectLocationPageState extends State<SelectLocationPage> {
   late GoogleMapController mapController;
-  LatLng _center = const LatLng(0, 0);
-  LatLng _lastMapPosition = const LatLng(0, 0);
+  LatLng _center = const LatLng(37.715133, 127.269311);
+  LatLng _lastMapPosition = const LatLng(37.715133, 127.269311);
   final TextEditingController _searchController = TextEditingController();
 
   @override

@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>현재 위치를 알기 위해 위치에 접근합니다.</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3429968328236998~3363966917</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>앱 사용 중 위치 정보를 사용하려면 권한이 필요합니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>사진을 선택하기 위해 사진 라이브러리에 접근합니다.</string>
 	<key>NSCameraUsageDescription</key>
@@ -13,7 +15,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Lovestory</string>
+	<string>Love Story</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

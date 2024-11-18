@@ -253,27 +253,34 @@ class _ListPageState extends State<ListPage> {
                       itemCount: lists.length,
                       itemBuilder: (context, index) {
                         final list = lists[index];
-                        return ListTile(
-                          leading: const Icon(Icons.event),
-                          title: Text(list['title'],
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontFamily: 'GowunDodum-Regular')),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NotePage(
-                                  title: list['title'],
-                                  listId: list.id,
+                        return Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ListTile(
+                            leading:
+                                const Icon(Icons.event, color: Colors.black),
+                            title: Text(list['title'],
+                                style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontFamily: 'GowunDodum-Regular')),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NotePage(
+                                    title: list['title'],
+                                    listId: list.id,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          onLongPress: () {
-                            _showDeleteConfirmationDialog(list.id);
-                          },
+                              );
+                            },
+                            onLongPress: () {
+                              _showDeleteConfirmationDialog(list.id);
+                            },
+                          ),
                         );
                       },
                     );

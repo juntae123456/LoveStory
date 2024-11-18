@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lovestory/screen/home_page.dart';
+import 'main_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -19,14 +22,80 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> loadResources() async {
     await Future.delayed(Duration(seconds: 4)); // 스플래쉬 화면을 4초 동안 표시
+    _checkLoggedInUser();
+  }
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const MyHomePage(
-          title: 'Home Page',
+  Future<void> _checkLoggedInUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    if (userId != null) {
+      _fetchUserData(userId);
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MyHomePage(
+            title: 'Home Page',
+          ),
         ),
-      ),
-    );
+      );
+    }
+  }
+
+  Future<void> _fetchUserData(String userId) async {
+    DocumentSnapshot userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data() as Map<String, dynamic>?;
+      String backgroundImageUrl = userData?['mainImageUrl'] ?? '';
+      String userName = userData?['lastName'] ?? 'Unknown';
+      String firstImageUrl =
+          userData?['profileUrl'] ?? 'assets/man_profile_image.png';
+
+      String partnerName = 'Unknown';
+      String secondImageUrl = 'assets/woman_profile_image.png';
+      String partnerId = userData?['partnerId'] ?? 'Unknown';
+
+      if (userData != null && userData.containsKey('partnerId')) {
+        String partnerId = userData['partnerId'];
+        DocumentSnapshot partnerDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(partnerId)
+            .get();
+
+        if (partnerDoc.exists) {
+          var partnerData = partnerDoc.data() as Map<String, dynamic>?;
+          partnerName = partnerData?['lastName'] ?? 'Unknown';
+          secondImageUrl =
+              partnerData?['profileUrl'] ?? 'assets/woman_profile_image.png';
+        }
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainPage(
+            userId: userId,
+            backgroundImageUrl: backgroundImageUrl.isNotEmpty
+                ? backgroundImageUrl
+                : 'assets/home_image.png', // 기본 배경 이미지
+            userName: userName,
+            firstImageUrl: firstImageUrl,
+            partnerName: partnerName,
+            secondImageUrl: secondImageUrl,
+            partnerId: partnerId,
+          ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const MyHomePage(
+            title: 'Home Page',
+          ),
+        ),
+      );
+    }
   }
 
   @override

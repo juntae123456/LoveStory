@@ -14,20 +14,46 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _userIdController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
 
   Future<void> _signUp() async {
     String userId = _userIdController.text.trim();
     String password = _passwordController.text.trim();
+    String confirmPassword = _confirmPasswordController.text.trim();
     String firstName = _firstNameController.text.trim();
     String lastName = _lastNameController.text.trim();
 
     if (userId.isEmpty ||
         password.isEmpty ||
+        confirmPassword.isEmpty ||
         firstName.isEmpty ||
         lastName.isEmpty) {
       _showErrorDialog('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (userId.length < 6) {
+      _showErrorDialog('아이디는 최소 6자 이상이어야 합니다.');
+      return;
+    }
+
+    if (password.length < 8) {
+      _showErrorDialog('비밀번호는 최소 8자 이상이어야 합니다.');
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showErrorDialog('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      _showErrorDialog('이미 존재하는 아이디입니다.');
       return;
     }
 
@@ -115,6 +141,17 @@ class _SignUpPageState extends State<SignUpPage> {
                     controller: _passwordController,
                     decoration: const InputDecoration(
                       labelText: '비밀번호',
+                      labelStyle: TextStyle(
+                          fontFamily: 'CuteFont', fontSize: 20), // 귀여운 폰트 스타일
+                      border: OutlineInputBorder(), // 테두리 추가
+                    ),
+                    obscureText: true,
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _confirmPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: '비밀번호 확인',
                       labelStyle: TextStyle(
                           fontFamily: 'CuteFont', fontSize: 20), // 귀여운 폰트 스타일
                       border: OutlineInputBorder(), // 테두리 추가

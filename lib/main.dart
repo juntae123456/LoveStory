@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lovestory/screen/splash_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,6 +20,8 @@ void main() async {
   await initializeDateFormatting();
   tz.initializeTimeZones();
   await _requestPermissions();
+  await dotenv.load(fileName: "assets/config/.env");
+  MobileAds.instance.initialize();
   runApp(const MyApp());
 }
 
@@ -51,10 +55,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Love Story',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false, // 디버그 표시 제거

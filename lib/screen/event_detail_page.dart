@@ -154,126 +154,127 @@ class EventDetailPage extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(
                   top: 80.0, left: 20.0, right: 20.0), // 상단에 100 패딩 추가
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  FutureBuilder<String>(
-                    future: _getUserProfileImageUrl(userId),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator();
-                      } else if (snapshot.hasError ||
-                          !snapshot.hasData ||
-                          snapshot.data!.isEmpty) {
-                        return Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundImage: AssetImage(
-                                  'assets/default_profile.png'), // 기본 프로필 이미지
-                              radius: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              '올린 사람: $userName',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'GowunDodum-Regular',
-                                fontSize: 17, // 글자 크기 증가
-                              ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundImage: NetworkImage(snapshot.data!),
-                              radius: 20,
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              userName,
-                              style: TextStyle(
-                                fontSize: 22, // 글자 크기 증가
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontFamily: 'GowunDodum-Regular',
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    '제목: $title',
-                    style: TextStyle(
-                      fontSize: 24, // 글자 크기 증가
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'GowunDodum-Regular',
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    '날짜: ${DateFormat('yyyy-MM-dd').format(date)}',
-                    style: TextStyle(
-                      fontSize: 17, // 글자 크기 증가
-                      color: Colors.white,
-                      fontFamily: 'GowunDodum-Regular',
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  if (imageUrls.isNotEmpty)
-                    Container(
-                      height: 500,
-                      child: PageView.builder(
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, index) {
-                          return Hero(
-                            tag: imageUrls[index],
-                            child: Image.network(
-                              imageUrls[index],
-                              fit: BoxFit.cover,
-                            ),
-                          );
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FutureBuilder<String>(
+                        future: _getUserProfileImageUrl(userId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return CircularProgressIndicator();
+                          } else if (snapshot.hasError ||
+                              !snapshot.hasData ||
+                              snapshot.data!.isEmpty) {
+                            return Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: AssetImage(
+                                      'assets/default_profile.png'), // 기본 프로필 이미지
+                                  radius: 20,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  '올린 사람: $userName',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontFamily: 'GowunDodum-Regular',
+                                    fontSize: 17, // 글자 크기 증가
+                                  ),
+                                ),
+                              ],
+                            );
+                          } else {
+                            return Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: NetworkImage(snapshot.data!),
+                                  radius: 20,
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  userName,
+                                  style: TextStyle(
+                                    fontSize: 22, // 글자 크기 증가
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                    fontFamily: 'GowunDodum-Regular',
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
                         },
                       ),
-                    ),
-                  if (imageUrls.isNotEmpty) SizedBox(height: 10),
-                  if (imageUrls.isEmpty)
-                    Container(
-                      height: 500,
-                      child: Center(
-                        child: Text(
-                          '이미지가 없습니다.',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.white,
-                            fontFamily: 'GowunDodum-Regular',
-                          ),
+                      SizedBox(height: 10),
+                      Text(
+                        '제목: $title',
+                        style: TextStyle(
+                          fontSize: 24, // 글자 크기 증가
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          fontFamily: 'GowunDodum-Regular',
                         ),
                       ),
-                    ),
-                  Text(
-                    '내용: $text',
-                    style: TextStyle(
-                      fontSize: 20, // 글자 크기 증가
-                      color: Colors.white,
-                      fontFamily: 'GowunDodum-Regular',
-                    ),
+                      SizedBox(height: 10),
+                      Text(
+                        '날짜: ${DateFormat('yyyy-MM-dd').format(date)}',
+                        style: TextStyle(
+                          fontSize: 17, // 글자 크기 증가
+                          color: Colors.black,
+                          fontFamily: 'GowunDodum-Regular',
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      if (imageUrls.isNotEmpty)
+                        Container(
+                          height: 500,
+                          child: PageView.builder(
+                            itemCount: imageUrls.length,
+                            itemBuilder: (context, index) {
+                              return Hero(
+                                tag: imageUrls[index],
+                                child: Image.network(
+                                  imageUrls[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      if (imageUrls.isNotEmpty) SizedBox(height: 10),
+                      if (imageUrls.isEmpty)
+                        Container(
+                          height: 500,
+                          child: Center(
+                            child: Text(
+                              '이미지가 없습니다.',
+                              style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.black,
+                                fontFamily: 'GowunDodum-Regular',
+                              ),
+                            ),
+                          ),
+                        ),
+                      Text(
+                        '내용: $text',
+                        style: TextStyle(
+                          fontSize: 20, // 글자 크기 증가
+                          color: Colors.black,
+                          fontFamily: 'GowunDodum-Regular',
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 10),
-                  Text(
-                    '장소: $location',
-                    style: TextStyle(
-                      fontSize: 20, // 글자 크기 증가
-                      color: Colors.white,
-                      fontFamily: 'GowunDodum-Regular',
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
