@@ -11,20 +11,17 @@
 ## 프로젝트 소개
 
 <p align="justify">
-프로젝트 개요/동기
+사이드 프로젝트를 하나 시작해보자는 마음으로 무엇을 할지 생각해보다가 내가 원하는 기능들을 넣은 데이트 어플을 만들어보자에서 시작하게되었습니다.
 </p>
 
-<p align="center">
-GIF Images
-</p>
 
 <br>
 
 ## 기술 스택
 
-| Flutter |
-| :--------: |
-|[![My Skills](https://skillicons.dev/icons?i=flutter&theme=light)](https://skillicons.dev)|
+| Flutter | firebase |
+| :--------: | :--------: |
+|[![My Skills](https://skillicons.dev/icons?i=flutter&theme=light)](https://skillicons.dev)|[![My Skills](https://skillicons.dev/icons?i=firebase&theme=light)](https://skillicons.dev)|
 
 <br>
 
