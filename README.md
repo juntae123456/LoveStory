@@ -1,4 +1,4 @@
-# 프로젝트 이름
+# Love Story
 
 <p align="center">
   <br>
