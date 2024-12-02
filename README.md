@@ -24,7 +24,7 @@ GIF Images
 
 | JavaScript | TypeScript |  React   |  Node   |
 | :--------: | :--------: | :------: | :-----: |
-|   <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"></svg>    |   ![ts]    | ![react] | ![node] |
+|   [![stackticon](https://firebasestorage.googleapis.com/v0/b/stackticon-81399.appspot.com/o/images%2F1733108280868?alt=media&token=fc190545-5a25-4f01-8aa0-91e00f30e608)](https://github.com/msdio/stackticon)    |   ![ts]    | ![react] | ![node] |
 
 <br>
 
