@@ -1,8 +1,9 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'login_page.dart';
+import 'pdf_viewer_page.dart'; // PDF 뷰어 페이지 임포트
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -18,6 +19,7 @@ class _SignUpPageState extends State<SignUpPage> {
       TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
+  bool _agreedToTerms = false;
 
   Future<void> _signUp() async {
     String userId = _userIdController.text.trim();
@@ -92,6 +94,31 @@ class _SignUpPageState extends State<SignUpPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showPrivacyPolicy() async {
+    try {
+      // Firestore에서 gs:// URL을 가져옵니다.
+      final doc = await FirebaseFirestore.instance
+          .collection('settings')
+          .doc('privacy_policy')
+          .get();
+      final gsUrl = doc['url'] as String;
+
+      // Firebase Storage에서 다운로드 URL을 가져옵니다.
+      final ref = FirebaseStorage.instance.refFromURL(gsUrl);
+      final pdfUrl = await ref.getDownloadURL();
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PDFViewerPage(pdfUrl: pdfUrl),
+        ),
+      );
+    } catch (e) {
+      _showErrorDialog('개인정보처리방침을 불러오는 데 실패했습니다.');
+      print('Error getting privacy policy URL: $e');
+    }
   }
 
   @override
@@ -179,16 +206,42 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _agreedToTerms = value ?? false;
+                          });
+                        },
+                      ),
+                      GestureDetector(
+                        onTap: _showPrivacyPolicy,
+                        child: const Text(
+                          '개인정보처리방침에 동의합니다.',
+                          style: TextStyle(
+                            fontFamily: 'CuteFont',
+                            fontSize: 16,
+                            decoration: TextDecoration.underline,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _signUp,
+                        onPressed: _agreedToTerms ? _signUp : null,
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
-                          backgroundColor: Colors.lightBlueAccent
-                              .withOpacity(0.8), // 버튼 배경색에 투명도 적용
+                          backgroundColor: _agreedToTerms
+                              ? Colors.lightBlueAccent.withOpacity(0.8)
+                              : Colors.grey, // 버튼 배경색에 투명도 적용
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15), // 둥근 모서리
                           ),

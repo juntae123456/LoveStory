@@ -27,8 +27,14 @@ ext {
     }
 }
 
+def keyStoreProperties = new Properties()
+def keyStoreFile = rootProject.file("key.properties")
+if (keyStoreFile.exists()) {
+    keyStoreProperties.load(new FileInputStream(keyStoreFile))
+}
+
 android {
-    namespace = "com.example.lovestory"
+    namespace = "lovestory.flutter_app"
     compileSdkVersion 34
     ndkVersion "25.1.8937393"
 
@@ -41,13 +47,22 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_1_8
     }
+    
+    signingConfigs {
+        release {
+            storeFile file(keyStoreProperties['storeFile'])
+            storePassword keyStoreProperties['storePassword']
+            keyAlias keyStoreProperties['keyAlias']
+            keyPassword keyStoreProperties['keyPassword']
+        }
+    }
 
     defaultConfig {
-        applicationId = "com.example.lovestory"
-        minSdkVersion 21
+        applicationId = "lovestory.flutter_app"
+        minSdkVersion 30
         targetSdkVersion 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "2.0"
 
         multiDexEnabled true
 
@@ -68,6 +83,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
         }
         debug {
             minifyEnabled false
