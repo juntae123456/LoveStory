@@ -24,7 +24,8 @@ GIF Images
 
 | JavaScript | TypeScript |  React   |  Node   |
 | :--------: | :--------: | :------: | :-----: |
-|   <icons/Flutter-Dark.svg>   |   ![ts]    | ![react] | ![node] |
+|[![My Skills](https://skillicons.dev/icons?i=java&theme=light)](https://skillicons.dev)
+|   ![ts]    | ![react] | ![node] |
 
 <br>
 
