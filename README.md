@@ -29,18 +29,22 @@
 |:---:|:---:|:---:|:---:|
 |<img src="https://github.com/user-attachments/assets/56eb7a80-a71c-451c-94b0-f6db05e21f82" width="300"/>|<img src="https://github.com/user-attachments/assets/688e476f-dfec-4991-9db4-20fc6b3e918e" width="300"/>|<img src="https://github.com/user-attachments/assets/0435257a-4978-48c1-bd1a-dac4357ea87e" width="300"/>|<img src="https://github.com/user-attachments/assets/15f30a60-2cb4-4d04-bc15-fba4c07fd3e6" width="300"/>|
 <br>
+
 |메인화면|캘린더|일정 추가|지도화면|
 |:---:|:---:|:---:|:---:|
 |<img src="https://github.com/user-attachments/assets/89b3d825-ade3-4609-8f19-bb9b99c6755a" width="300"/>|<img src="https://github.com/user-attachments/assets/69b68d88-bc10-444e-87f2-9d73c0e8fec9" width="300"/>|<img src="https://github.com/user-attachments/assets/05e7d286-4d14-467d-ab13-0758966e5825" width="300"/>|<img src="https://github.com/user-attachments/assets/77ac5130-4a9d-4dd0-b4d6-14b43b163900"/>|
 <br>
+
 |메신저|편지함|리스트 종류|리스트 내용|
 |:---:|:---:|:---:|:---:|
 |<img src="https://github.com/user-attachments/assets/f477783f-a4eb-4bbb-a156-412ab3f0a538" width="300"/>|<img src="https://github.com/user-attachments/assets/a4ba9b69-d159-46e7-9552-d75fa48122c1" width="300"/>|<img src="https://github.com/user-attachments/assets/cd2d263b-2cb1-4fc2-96ee-26f9badc6918" width="300"/>|<img src="https://github.com/user-attachments/assets/968de385-3efd-4f04-a0d5-33f31f6a8160"/>|
 <br>
+
 |설정|
 |:---:|
 |<img src="https://github.com/user-attachments/assets/5a7a2d4a-fb25-48a4-a454-169f3a97e55c"/>|
 <br>
+
 ###첫화면에서 회원가입 후 로그인을 통하여 상대방과 연결시 메인화면으로 이동할 수 있고
 
 ###메인화면에서 편지를 클릭후 편지를 쓸시 상대방에서 하루뒤에 날라가도록 설정했습니다.
