@@ -22,9 +22,9 @@ GIF Images
 
 ## 기술 스택
 
-| JavaScript |
+| Flutter |
 | :--------: |
-|[![My Skills](https://skillicons.dev/icons?i=java&theme=light)](https://skillicons.dev)|
+|[![My Skills](https://skillicons.dev/icons?i=flutter&theme=light)](https://skillicons.dev)|
 
 <br>
 
