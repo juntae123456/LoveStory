@@ -2,7 +2,7 @@
 
 <p align="center">
   <br>
-  <img src="./images/common/logo-sample.jpeg">
+  <img src="https://github.com/user-attachments/assets/df4c74ff-b203-47ca-afbb-ff09a70d6bb1">
   <br>
 </p>
 
