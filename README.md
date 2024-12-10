@@ -13,6 +13,8 @@
 <p align="justify">
 사이드 프로젝트를 하나 시작해보자는 마음으로 무엇을 할지 생각해보다가 내가 원하는 기능들을 넣은 데이트 어플을 만들어보자에서 시작하게되었습니다.
 </p>
+<br>
+
 ## 프로젝트 주소
 <p align="justify">
 https://play.google.com/store/apps/details?id=lovestory.flutter_app
