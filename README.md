@@ -15,12 +15,6 @@
 </p>
 <br>
 
-## 프로젝트 주소
-<p align="justify">
-https://play.google.com/store/apps/details?id=lovestory.flutter_app
-</p>
-<br>
-
 ## 기술 스택
 
 | Flutter | firebase |
